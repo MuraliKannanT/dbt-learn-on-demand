@@ -1,0 +1,81 @@
+version: 2
+
+sources:
+    - name: jaffle_shop
+      description: A clone of a Postgres application database.
+      database: raw
+      tables:
+        - name: customers
+          description: Raw data of Customers.
+          columns:
+            - name: id
+              description: Primary key for Customers.
+              tests:
+               - unique
+               - not_null
+
+        - name: orders
+          loaded_at_field: _etl_loaded_at
+          freshness:
+            warn_after: {count: 10, period: day}
+            error_after: {count: 20, period: day}
+          description: Raw data of Orders.
+          columns:
+            - name: id
+              description: Primary key for Orders.
+              tests:
+                - unique
+                - not_null
+
+    - name: stripe
+      database: raw
+      tables:
+        - name: payment
+          description: Raw data of Payments.
+          columns:
+            - name: id
+              description: Primary key for Payments.
+              tests:
+                - unique
+                - not_null
+
+models:
+
+    - name: stg_customers
+      description: Staging data for Customers from jaffle shop app.
+      columns: 
+        - name: customer_id
+          description: Primary key for Customers.
+          tests:
+            - unique
+            - not_null
+        - name: first_name
+          description: Customer's first name.
+        - name: last_name
+          description: Customer's last name.
+
+    - name: stg_orders
+      description: Staging data for Orders from jaffle shop app.
+      columns: 
+        - name: status
+          description: '{{ doc("order_status") }}'
+          tests:
+            - accepted_values:
+                values:
+                  - completed
+                  - shipped
+                  - returned
+                  - placed
+                  - return_pending
+        - name: orderdate
+          description: The date on which orders are placed by customers.
+
+    - name: stg_payments
+      description: Staging data for Payments from jaffle shop app.
+      columns: 
+        - name: id
+          description: Primary key for Payments.
+        - name: amount
+          description: Amount in US Dollars.
+        - name: status
+          description: "{{doc('pay_status')}}"
